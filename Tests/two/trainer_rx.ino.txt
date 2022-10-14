@@ -1,0 +1,85 @@
+#include<Wire.h>
+
+int ch1=A0;
+int ch3=A1;
+int ch1_data,ch1_dataa;
+int ch3_data,ch3_dataa;
+String answer,answers;
+int trig=A3;
+int echo=A2;
+float ping;
+float Speed=345.6468218549304;
+float dist,ledin;
+#define ul 13
+
+
+int mapsteering(int data)
+{
+ if(data<5 && data>-5)
+  {
+   data=0;
+  }
+ data=map(data,994,1988,-25,25);
+ return data;
+}
+
+int mapthrottle(int data)
+{
+ if(data<5)
+  {
+   data=0;
+  }
+  data=map(data,994,1976,0,25);
+ return data;
+}
+
+void setup() 
+{
+  Serial.begin(38400);
+  pinMode(ch1,INPUT);
+  pinMode(ch3,INPUT);
+  Wire.begin(8);
+  Wire.onRequest(request_Event);
+  pinMode(trig,OUTPUT);
+  pinMode(echo,INPUT);
+}
+
+float get_distance()
+{
+  digitalWrite(trig,LOW);
+  delayMicroseconds(2000);
+  digitalWrite(trig,HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trig,LOW);
+  ping=pulseIn(echo,HIGH);
+  return (Speed*ping)/(2*10000);
+  
+}
+void request_Event()
+{
+  for(int i=0;i<ul;i++)
+  {
+     Wire.write((char)answers[i]);
+  }
+}
+
+void loop() 
+{
+  ch3_data=pulseIn(ch3,HIGH);
+  ch3_dataa=mapthrottle(ch3_data);
+  ch1_data=pulseIn(ch1,HIGH);
+  ch1_dataa=mapsteering(ch1_data);
+  dist=get_distance();
+  Serial.print(ch3_dataa);
+  Serial.print("/");
+  Serial.print(ch1_dataa);
+  Serial.print("/");
+  Serial.print(dist);
+  Serial.print("//");
+  answer=String(ch3_dataa)+","+String(ch1_dataa)+","+String(dist);
+  unsigned int len = answer.length();
+  Serial.print(answer);
+  Serial.print("  -  ");
+  answers=String(len)+"/"+String(ch3_dataa)+","+String(ch1_dataa)+","+String(dist);
+  Serial.println(answers);
+}
